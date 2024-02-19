@@ -6,7 +6,7 @@
 
     <groupId>cn.edu.tsinghua.iginx</groupId>
     <artifactId>parquet-file</artifactId>
-    <version>0.0.0</version>
+    <version>0.0.1</version>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
@@ -17,10 +17,105 @@
     <dependencies>
         <dependency>
             <groupId>org.apache.parquet</groupId>
-            <artifactId>parquet-hadoop</artifactId>
+            <artifactId>parquet-column</artifactId>
             <version>1.13.1</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.parquet</groupId>
+            <artifactId>parquet-hadoop</artifactId>
+            <version>1.13.1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.xerial.snappy</groupId>
+                    <artifactId>snappy-java</artifactId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>parquet-jackson</artifactId>
+                    <groupId>org.apache.parquet</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>commons-pool</artifactId>
+                    <groupId>commons-pool</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>aircompressor</artifactId>
+                    <groupId>io.airlift</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>zstd-jni</artifactId>
+                    <groupId>com.github.luben</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>io.airlift</groupId>
+            <artifactId>aircompressor</artifactId>
+            <version>0.25</version>
+        </dependency>
+        <dependency>
+            <groupId>org.brotli</groupId>
+            <artifactId>dec</artifactId>
+            <version>0.1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.2</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.1</version>
+                <configuration>
+                    <minimizeJar>true</minimizeJar>
+                    <artifactSet>
+                        <includes>
+                            <include>org.apache.parquet:parquet-hadoop</include>
+                        </includes>
+                    </artifactSet>
+                    <filters>
+                        <filter>
+                            <artifact>org.apache.parquet:parquet-hadoop</artifact>
+                            <excludes>
+                                <exclude>org/apache/parquet/format/converter/ParquetMetadataConverter*</exclude>
+                                <exclude>org/apache/parquet/hadoop/metadata/ParquetMetadata*</exclude>
+                                <exclude>org/apache/parquet/hadoop/CodecFactory*</exclude>
+                                <exclude>org/apache/parquet/hadoop/ParquetFileReader*</exclude>
+                                <exclude>org/apache/parquet/hadoop/ParquetFileWriter*</exclude>
+                                <exclude>shaded/parquet/it/unimi/dsi/fastutil/**</exclude>
+                            </excludes>
+                        </filter>
+                    </filters>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
     <distributionManagement>
         <repository>

@@ -33,6 +33,38 @@ import java.nio.file.StandardOpenOption;
  */
 public class LocalOutputFile implements OutputFile {
 
+  private final Path path;
+
+  public LocalOutputFile(Path file) {
+    path = file;
+  }
+
+  @Override
+  public PositionOutputStream create(long buffer) throws IOException {
+    return new LocalPositionOutputStream((int) buffer, StandardOpenOption.CREATE_NEW);
+  }
+
+  @Override
+  public PositionOutputStream createOrOverwrite(long buffer) throws IOException {
+    return new LocalPositionOutputStream(
+        (int) buffer, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+  }
+
+  @Override
+  public boolean supportsBlockSize() {
+    return true;
+  }
+
+  @Override
+  public long defaultBlockSize() {
+    return 512;
+  }
+
+  @Override
+  public String getPath() {
+    return path.toString();
+  }
+
   private class LocalPositionOutputStream extends PositionOutputStream {
 
     private final BufferedOutputStream stream;
@@ -75,37 +107,5 @@ public class LocalOutputFile implements OutputFile {
     public void close() throws IOException {
       stream.close();
     }
-  }
-
-  private final Path path;
-
-  public LocalOutputFile(Path file) {
-    path = file;
-  }
-
-  @Override
-  public PositionOutputStream create(long buffer) throws IOException {
-    return new LocalPositionOutputStream((int) buffer, StandardOpenOption.CREATE_NEW);
-  }
-
-  @Override
-  public PositionOutputStream createOrOverwrite(long buffer) throws IOException {
-    return new LocalPositionOutputStream(
-        (int) buffer, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-  }
-
-  @Override
-  public boolean supportsBlockSize() {
-    return true;
-  }
-
-  @Override
-  public long defaultBlockSize() {
-    return 512;
-  }
-
-  @Override
-  public String getPath() {
-    return path.toString();
   }
 }
