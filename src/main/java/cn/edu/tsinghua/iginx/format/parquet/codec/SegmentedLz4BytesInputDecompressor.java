@@ -25,7 +25,6 @@ public class SegmentedLz4BytesInputDecompressor implements CompressionCodecFacto
 
   @Override
   public void decompress(ByteBuffer input, int compressedSize, ByteBuffer output, int uncompressedSize) throws IOException {
-    output.clear();
     Lz4Decompressor decompressor = new Lz4Decompressor();
     int offset = 0;
     while (offset < compressedSize) {

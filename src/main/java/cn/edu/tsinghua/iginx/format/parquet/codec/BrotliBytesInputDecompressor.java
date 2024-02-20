@@ -19,7 +19,6 @@ public class BrotliBytesInputDecompressor implements CompressionCodecFactory.Byt
 
   @Override
   public void decompress(ByteBuffer input, int compressedSize, ByteBuffer output, int uncompressedSize) throws IOException {
-    output.clear();
     BytesInput bytesInput = decompress(BytesInput.from(input), uncompressedSize);
     output.put(bytesInput.toByteArray());
     output.position(uncompressedSize);

@@ -48,7 +48,6 @@ public class AirliftBytesInputDecompressor
   public void decompress(
       ByteBuffer input, int compressedSize, ByteBuffer output, int uncompressedSize)
       throws IOException {
-    output.clear();
     decompressor.decompress(input, output);
     output.position(uncompressedSize);
   }

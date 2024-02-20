@@ -25,22 +25,32 @@ import io.airlift.compress.lzo.LzoCompressor;
 import io.airlift.compress.lzo.LzoDecompressor;
 import io.airlift.compress.snappy.SnappyCompressor;
 import io.airlift.compress.snappy.SnappyDecompressor;
-import io.airlift.compress.zstd.ZstdCompressor;
-import io.airlift.compress.zstd.ZstdDecompressor;
 import org.apache.parquet.bytes.BytesInput;
 import org.apache.parquet.compression.CompressionCodecFactory;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Map;
 
 public class CodecFactory implements CompressionCodecFactory {
 
-  private static final int DEFAULT_LZ4_SEGMENT_SIZE = 256 * 1024; // same as Hadoop
-  private final Map<CompressionCodecName, BytesInputCompressor> compressors = new HashMap<>();
-  private final Map<CompressionCodecName, BytesInputDecompressor> decompressors = new HashMap<>();
+  public static final int DEFAULT_LZ4_SEGMENT_SIZE = 256 * 1024;
+  public static final int DEFAULT_ZSTD_LEVEL = 3;
+  public static final int DEFAULT_ZSTD_WORKERS = 0;
+
+  private final int lz4SegmentSize;
+  private final int zstdLevel;
+  private final int zstdWorkers;
+
+  public CodecFactory() {
+    this(DEFAULT_LZ4_SEGMENT_SIZE, DEFAULT_ZSTD_LEVEL, DEFAULT_ZSTD_WORKERS);
+  }
+
+  public CodecFactory(int lz4SegmentSize, int zstdLevel, int zstdWorkers) {
+    this.lz4SegmentSize = lz4SegmentSize;
+    this.zstdLevel = zstdLevel;
+    this.zstdWorkers = zstdWorkers;
+  }
 
   public static BytesCompressor wrap(CompressionCodecFactory.BytesInputCompressor compressor) {
     return new BytesCompressor() {
@@ -82,22 +92,16 @@ public class CodecFactory implements CompressionCodecFactory {
 
   @Override
   public BytesInputCompressor getCompressor(CompressionCodecName codecName) {
-    return compressors.computeIfAbsent(codecName, this::createCompressor);
+    return createCompressor(codecName);
   }
 
   @Override
   public BytesInputDecompressor getDecompressor(CompressionCodecName codecName) {
-    return decompressors.computeIfAbsent(codecName, this::createDecompressor);
+    return createDecompressor(codecName);
   }
 
   @Override
   public void release() {
-    for (BytesInputCompressor compressor : compressors.values()) {
-      compressor.release();
-    }
-    for (BytesInputDecompressor decompressor : decompressors.values()) {
-      decompressor.release();
-    }
   }
 
   protected BytesInputCompressor createCompressor(CompressionCodecName codecName) {
@@ -111,7 +115,7 @@ public class CodecFactory implements CompressionCodecFactory {
       case LZO:
         return new AirliftBytesInputCompressor(new LzoCompressor(), codecName);
       case ZSTD:
-        return new AirliftBytesInputCompressor(new ZstdCompressor(), codecName);
+        return new ZstdJniBytesInputCompressor(zstdLevel, zstdWorkers);
       case LZ4_RAW:
         return new AirliftBytesInputCompressor(new Lz4Compressor(), codecName);
       default:
@@ -132,9 +136,9 @@ public class CodecFactory implements CompressionCodecFactory {
       case BROTLI:
         return new BrotliBytesInputDecompressor();
       case LZ4:
-        return new SegmentedLz4BytesInputDecompressor(DEFAULT_LZ4_SEGMENT_SIZE);
+        return new SegmentedLz4BytesInputDecompressor(lz4SegmentSize);
       case ZSTD:
-        return new AirliftBytesInputDecompressor(new ZstdDecompressor());
+        return new ZstdJniBytesInputDecompressor();
       case LZ4_RAW:
         return new AirliftBytesInputDecompressor(new Lz4Decompressor());
       default:

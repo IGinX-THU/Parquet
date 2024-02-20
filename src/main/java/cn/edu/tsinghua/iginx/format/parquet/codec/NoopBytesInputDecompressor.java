@@ -31,7 +31,6 @@ public class NoopBytesInputDecompressor implements CompressionCodecFactory.Bytes
       throw new IOException(
           "Non-compressed data did not have matching compressed and uncompressed sizes.");
     }
-    output.clear();
     output.put((ByteBuffer) input.duplicate().position(0).limit(compressedSize));
   }
 
