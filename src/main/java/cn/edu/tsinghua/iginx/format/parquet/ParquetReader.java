@@ -21,6 +21,7 @@ package cn.edu.tsinghua.iginx.format.parquet;
 import org.apache.parquet.hadoop.ParquetFileReader;
 import org.apache.parquet.hadoop.metadata.ParquetMetadata;
 import org.apache.parquet.io.InputFile;
+import org.apache.parquet.io.SeekableInputStream;
 import org.apache.parquet.io.api.RecordMaterializer;
 import org.apache.parquet.schema.MessageType;
 
@@ -38,7 +39,12 @@ public class ParquetReader<T> implements Closeable {
     Objects.requireNonNull(recordMaterializerFactory);
     Objects.requireNonNull(options);
 
-    ParquetFileReader reader = new ParquetFileReader(file, options);
+    ParquetMetadata footer;
+    try (SeekableInputStream in = file.newStream()) {
+      footer = ParquetFileReader.readFooter(file, options, in);
+    }
+
+    ParquetFileReader reader = new ParquetFileReader(file, footer, options);
     ParquetMetadata metadata = reader.getFooter();
     MessageType schema = metadata.getFileMetaData().getSchema();
 

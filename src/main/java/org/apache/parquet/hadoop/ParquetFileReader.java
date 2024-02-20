@@ -96,14 +96,14 @@ public class ParquetFileReader implements Closeable {
   private InternalFileDecryptor fileDecryptor = null;
   private MessageType requestedSchema = null;
 
-  public ParquetFileReader(InputFile file, ParquetReadOptions options)
+  public ParquetFileReader(InputFile file, ParquetMetadata footer, ParquetReadOptions options)
       throws IOException {
     this.converter = new ParquetMetadataConverter(options);
     this.file = file;
     this.options = options;
     this.f = file.newStream();
     try {
-      this.footer = readFooter(file, options, f);
+      this.footer = footer;
       this.fileMetaData = footer.getFileMetaData();
       this.fileDecryptor =
           fileMetaData.getFileDecryptor(); // must be called before filterRowGroups!
