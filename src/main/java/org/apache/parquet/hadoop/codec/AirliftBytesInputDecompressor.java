@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cn.edu.tsinghua.iginx.format.parquet.codec;
+package org.apache.parquet.hadoop.codec;
 
 import io.airlift.compress.Decompressor;
 import org.apache.parquet.bytes.BytesInput;

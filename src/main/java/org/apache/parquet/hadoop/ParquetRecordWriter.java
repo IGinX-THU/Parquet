@@ -16,26 +16,23 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.format.parquet;
+package org.apache.parquet.hadoop;
 
-import cn.edu.tsinghua.iginx.format.parquet.api.RecordDematerializer;
+import org.apache.parquet.ParquetWriteOptions;
 import org.apache.parquet.column.ColumnWriteStore;
 import org.apache.parquet.column.ParquetProperties;
 import org.apache.parquet.crypto.InternalFileEncryptor;
-import org.apache.parquet.hadoop.CodecFactory;
-import org.apache.parquet.hadoop.ColumnChunkPageWriteStore;
-import org.apache.parquet.hadoop.ParquetFileWriter;
+import org.apache.parquet.hadoop.metadata.ParquetMetadata;
 import org.apache.parquet.io.ColumnIOFactory;
 import org.apache.parquet.io.MessageColumnIO;
 import org.apache.parquet.io.api.RecordConsumer;
+import org.apache.parquet.io.api.RecordDematerializer;
 import org.apache.parquet.schema.MessageType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
 import static java.lang.Math.max;
@@ -47,7 +44,6 @@ public class ParquetRecordWriter<T> implements Closeable {
   private final ParquetFileWriter parquetFileWriter;
   private final RecordDematerializer<T> recordDematerializer;
   private final MessageType schema;
-  private final Map<String, String> extraMetaData = new HashMap<>();
   private final long rowGroupSizeThreshold;
   private final CodecFactory.BytesCompressor compressor;
   private final boolean validating;
@@ -103,15 +99,11 @@ public class ParquetRecordWriter<T> implements Closeable {
     recordDematerializer.setRecordConsumer(recordConsumer);
   }
 
-  public void setExtraMetaData(String key, String value) {
-    extraMetaData.put(key, value);
-  }
-
   @Override
   public void close() throws IOException {
     if (!closed) {
       flushRowGroupToStore();
-      parquetFileWriter.end(schema, extraMetaData);
+      parquetFileWriter.end(schema, recordDematerializer.getExtraMetaData());
       closed = true;
       this.compressor.release();
     }
@@ -128,6 +120,10 @@ public class ParquetRecordWriter<T> implements Closeable {
    */
   public long getDataSize() {
     return lastRowGroupEndPos + columnStore.getBufferedSize();
+  }
+
+  public ParquetMetadata getFooter() {
+    return parquetFileWriter.getFooter();
   }
 
   private void checkBlockSizeReached() throws IOException {

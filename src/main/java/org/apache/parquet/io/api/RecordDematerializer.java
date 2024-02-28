@@ -16,10 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.format.parquet.api;
+package org.apache.parquet.io.api;
 
-import org.apache.parquet.io.api.RecordConsumer;
 import org.apache.parquet.schema.MessageType;
+
+import java.util.Map;
 
 public abstract class RecordDematerializer<T> {
 
@@ -33,4 +34,6 @@ public abstract class RecordDematerializer<T> {
   public abstract void write(T record);
 
   public abstract MessageType getSchema();
+
+  public abstract Map<String, String> getExtraMetaData();
 }

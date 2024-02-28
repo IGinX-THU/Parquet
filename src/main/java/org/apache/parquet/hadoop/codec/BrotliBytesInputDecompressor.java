@@ -1,17 +1,20 @@
-package cn.edu.tsinghua.iginx.format.parquet.codec;
+package org.apache.parquet.hadoop.codec;
 
 import org.apache.parquet.bytes.BytesInput;
 import org.apache.parquet.compression.CompressionCodecFactory;
+import org.brotli.dec.BrotliInputStream;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.util.zip.GZIPInputStream;
 
-public class BuiltinGzipBytesInputDecompressor implements CompressionCodecFactory.BytesInputDecompressor {
+public class BrotliBytesInputDecompressor implements CompressionCodecFactory.BytesInputDecompressor {
   @Override
   public BytesInput decompress(BytesInput bytes, int uncompressedSize) throws IOException {
-    GZIPInputStream gzipInputStream = new GZIPInputStream(bytes.toInputStream());
-    return BytesInput.from(gzipInputStream, uncompressedSize);
+    try (InputStream inputStream = bytes.toInputStream();
+         BrotliInputStream brotliInputStream = new BrotliInputStream(inputStream)) {
+      return BytesInput.from(brotliInputStream, uncompressedSize);
+    }
   }
 
   @Override

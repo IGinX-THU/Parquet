@@ -23,7 +23,7 @@
 
 package org.apache.parquet.hadoop;
 
-import cn.edu.tsinghua.iginx.format.parquet.ParquetWriteOptions;
+import org.apache.parquet.ParquetWriteOptions;
 import org.apache.parquet.Preconditions;
 import org.apache.parquet.Version;
 import org.apache.parquet.bytes.BytesInput;

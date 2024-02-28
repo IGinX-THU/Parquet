@@ -1,20 +1,25 @@
-package cn.edu.tsinghua.iginx.format.parquet.example;
+package org.apache.parquet.hadoop.example;
 
-import cn.edu.tsinghua.iginx.format.parquet.api.RecordDematerializer;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.example.data.GroupWriter;
 import org.apache.parquet.io.api.RecordConsumer;
+import org.apache.parquet.io.api.RecordDematerializer;
 import org.apache.parquet.schema.MessageType;
 
+import java.util.Map;
 import java.util.Objects;
 
 public class GroupDematerializer extends RecordDematerializer<Group> {
   private final MessageType schema;
+  private final Map<String, String> extraMetaData;
+
   private GroupWriter groupWriter;
 
-  public GroupDematerializer(MessageType schema) {
+  public GroupDematerializer(MessageType schema, Map<String, String> extraMetaData) {
     Objects.requireNonNull(schema);
+    Objects.requireNonNull(extraMetaData);
     this.schema = schema;
+    this.extraMetaData = extraMetaData;
   }
 
   @Override
@@ -32,5 +37,10 @@ public class GroupDematerializer extends RecordDematerializer<Group> {
   @Override
   public MessageType getSchema() {
     return schema;
+  }
+
+  @Override
+  public Map<String, String> getExtraMetaData() {
+    return extraMetaData;
   }
 }

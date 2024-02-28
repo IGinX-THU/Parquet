@@ -23,7 +23,7 @@
 
 package org.apache.parquet.hadoop;
 
-import cn.edu.tsinghua.iginx.format.parquet.ParquetReadOptions;
+import org.apache.parquet.ParquetReadOptions;
 import org.apache.parquet.bytes.ByteBufferInputStream;
 import org.apache.parquet.bytes.BytesInput;
 import org.apache.parquet.column.ColumnDescriptor;

@@ -17,7 +17,7 @@
  *  under the License.
  */
 
-package cn.edu.tsinghua.iginx.format.parquet;
+package org.apache.parquet;
 
 import org.apache.parquet.column.ParquetProperties;
 import org.apache.parquet.compression.CompressionCodecFactory;
@@ -112,6 +112,10 @@ public class ParquetWriteOptions {
 
     private boolean enableOverwrite = ENABLE_OVERWRITE_DEFAULT;
 
+    public ParquetProperties.Builder asParquetPropertiesBuilder() {
+      return parquetPropertiesBuilder;
+    }
+
     public Builder withOverwrite(boolean enableOverwrite) {
       this.enableOverwrite = enableOverwrite;
       return this;
@@ -132,93 +136,13 @@ public class ParquetWriteOptions {
       return this;
     }
 
-    public Builder withPageSize(int pageSize) {
-      parquetPropertiesBuilder.withPageSize(pageSize);
-      return this;
-    }
-
-    public Builder withPageRowCountLimit(int rowCount) {
-      parquetPropertiesBuilder.withPageRowCountLimit(rowCount);
-      return this;
-    }
-
-    public Builder withDictionaryPageSize(int dictionaryPageSize) {
-      parquetPropertiesBuilder.withDictionaryPageSize(dictionaryPageSize);
-      return this;
-    }
-
     public Builder withMaxPaddingSize(int maxPaddingSize) {
       this.maxPaddingSize = maxPaddingSize;
       return this;
     }
 
-    public Builder withDictionaryEncoding(boolean enableDictionary) {
-      parquetPropertiesBuilder.withDictionaryEncoding(enableDictionary);
-      return this;
-    }
-
-    public Builder withByteStreamSplitEncoding(boolean enableByteStreamSplit) {
-      parquetPropertiesBuilder.withByteStreamSplitEncoding(enableByteStreamSplit);
-      return this;
-    }
-
-    public Builder withDictionaryEncoding(String columnPath, boolean enableDictionary) {
-      parquetPropertiesBuilder.withDictionaryEncoding(columnPath, enableDictionary);
-      return this;
-    }
-
     public Builder withValidation(boolean enableValidation) {
       this.enableValidation = enableValidation;
-      return this;
-    }
-
-    public Builder withWriterVersion(ParquetProperties.WriterVersion version) {
-      parquetPropertiesBuilder.withWriterVersion(version);
-      return this;
-    }
-
-    public Builder withPageWriteChecksumEnabled(boolean enablePageWriteChecksum) {
-      parquetPropertiesBuilder.withPageWriteChecksumEnabled(enablePageWriteChecksum);
-      return this;
-    }
-
-    public Builder withBloomFilterNDV(String columnPath, long ndv) {
-      parquetPropertiesBuilder.withBloomFilterNDV(columnPath, ndv);
-      return this;
-    }
-
-    public Builder withBloomFilterFPP(String columnPath, double fpp) {
-      parquetPropertiesBuilder.withBloomFilterFPP(columnPath, fpp);
-      return this;
-    }
-
-    public Builder withBloomFilterEnabled(boolean enabled) {
-      parquetPropertiesBuilder.withBloomFilterEnabled(enabled);
-      return this;
-    }
-
-    public Builder withBloomFilterEnabled(String columnPath, boolean enabled) {
-      parquetPropertiesBuilder.withBloomFilterEnabled(columnPath, enabled);
-      return this;
-    }
-
-    public Builder withMinRowCountForPageSizeCheck(int min) {
-      parquetPropertiesBuilder.withMinRowCountForPageSizeCheck(min);
-      return this;
-    }
-
-    public Builder withMaxRowCountForPageSizeCheck(int max) {
-      parquetPropertiesBuilder.withMaxRowCountForPageSizeCheck(max);
-      return this;
-    }
-
-    public Builder withColumnIndexTruncateLength(int length) {
-      parquetPropertiesBuilder.withColumnIndexTruncateLength(length);
-      return this;
-    }
-
-    public Builder withStatisticsTruncateLength(int length) {
-      parquetPropertiesBuilder.withStatisticsTruncateLength(length);
       return this;
     }
 

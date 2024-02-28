@@ -14,39 +14,23 @@
  * limitations under the License.
  */
 
-package cn.edu.tsinghua.iginx.format.parquet.codec;
+package org.apache.parquet.hadoop.codec;
 
-import io.airlift.compress.Compressor;
 import org.apache.parquet.bytes.BytesInput;
 import org.apache.parquet.compression.CompressionCodecFactory;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 
 import java.io.IOException;
 
-public class AirliftBytesInputCompressor implements CompressionCodecFactory.BytesInputCompressor {
-
-  private final Compressor compressor;
-
-  private final CompressionCodecName codecName;
-
-  public AirliftBytesInputCompressor(Compressor compressor, CompressionCodecName codecName) {
-    this.compressor = compressor;
-    this.codecName = codecName;
-  }
-
+public class NoopBytesInputCompressor implements CompressionCodecFactory.BytesInputCompressor {
   @Override
   public BytesInput compress(BytesInput bytes) throws IOException {
-    byte[] ingoing = bytes.toByteArray();
-    int maxOutputSize = compressor.maxCompressedLength((int) bytes.size());
-    byte[] outgoing = new byte[maxOutputSize];
-
-    int compressedSize = compressor.compress(ingoing, 0, ingoing.length, outgoing, 0, outgoing.length);
-    return BytesInput.from(outgoing, 0, compressedSize);
+    return bytes;
   }
 
   @Override
   public CompressionCodecName getCodecName() {
-    return codecName;
+    return CompressionCodecName.UNCOMPRESSED;
   }
 
   @Override

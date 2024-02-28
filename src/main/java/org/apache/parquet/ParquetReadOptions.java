@@ -17,7 +17,7 @@
  *  under the License.
  */
 
-package cn.edu.tsinghua.iginx.format.parquet;
+package org.apache.parquet;
 
 import org.apache.parquet.bytes.ByteBufferAllocator;
 import org.apache.parquet.bytes.HeapByteBufferAllocator;

@@ -18,8 +18,8 @@
  */
 package org.apache.parquet.format.converter;
 
-import cn.edu.tsinghua.iginx.format.parquet.ParquetReadOptions;
 import org.apache.parquet.CorruptStatistics;
+import org.apache.parquet.ParquetReadOptions;
 import org.apache.parquet.Preconditions;
 import org.apache.parquet.bytes.ByteBufferInputStream;
 import org.apache.parquet.column.EncodingStats;

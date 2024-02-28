@@ -18,7 +18,6 @@
  */
 package org.apache.parquet.hadoop;
 
-import cn.edu.tsinghua.iginx.format.parquet.codec.*;
 import io.airlift.compress.lz4.Lz4Compressor;
 import io.airlift.compress.lz4.Lz4Decompressor;
 import io.airlift.compress.lzo.LzoCompressor;
@@ -27,6 +26,7 @@ import io.airlift.compress.snappy.SnappyCompressor;
 import io.airlift.compress.snappy.SnappyDecompressor;
 import org.apache.parquet.bytes.BytesInput;
 import org.apache.parquet.compression.CompressionCodecFactory;
+import org.apache.parquet.hadoop.codec.*;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 
 import java.io.IOException;

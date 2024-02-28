@@ -21,34 +21,50 @@
  */
 package org.apache.parquet.io;
 
-import java.io.BufferedOutputStream;
+import org.apache.parquet.bytes.ByteBufferAllocator;
+
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.WritableByteChannel;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
-/**
- * {@code LocalOutputFile} is an implementation needed by Parquet to write to local data files using
- * {@link org.apache.parquet.io.PositionOutputStream} instances.
- */
 public class LocalOutputFile implements OutputFile {
 
   private final Path path;
+  private final ByteBufferAllocator allocator;
+  private final int maxBufferSize;
 
-  public LocalOutputFile(Path file) {
-    path = file;
+  public LocalOutputFile(Path file, ByteBufferAllocator allocator, int maxBufferSize) {
+    this.path = file;
+    this.allocator = allocator;
+    this.maxBufferSize = Math.max(8 * 1024, Integer.highestOneBit(maxBufferSize));
+  }
+
+  private ByteBuffer allocate(long hint) {
+    int size = (int) Math.min(maxBufferSize, hint);
+    ByteBuffer byteBuffer = allocator.allocate(size);
+    byteBuffer.limit(size);
+    return byteBuffer;
   }
 
   @Override
-  public PositionOutputStream create(long buffer) throws IOException {
-    return new LocalPositionOutputStream((int) buffer, StandardOpenOption.CREATE_NEW);
+  public PositionOutputStream create(long blockSizeHint) throws IOException {
+    ByteBuffer byteBuffer = allocate(blockSizeHint);
+    return new LocalPositionOutputStream(byteBuffer, StandardOpenOption.CREATE_NEW);
   }
 
   @Override
-  public PositionOutputStream createOrOverwrite(long buffer) throws IOException {
-    return new LocalPositionOutputStream(
-        (int) buffer, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+  public PositionOutputStream createOrOverwrite(long blockSizeHint) throws IOException {
+    ByteBuffer byteBuffer = allocate(blockSizeHint);
+    return new LocalPositionOutputStream(byteBuffer, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
   }
+
 
   @Override
   public boolean supportsBlockSize() {
@@ -57,7 +73,7 @@ public class LocalOutputFile implements OutputFile {
 
   @Override
   public long defaultBlockSize() {
-    return 512;
+    return 4 * 1024;
   }
 
   @Override
@@ -67,12 +83,18 @@ public class LocalOutputFile implements OutputFile {
 
   private class LocalPositionOutputStream extends PositionOutputStream {
 
-    private final BufferedOutputStream stream;
+    private final ByteBuffer buffer;
+
+    private final WritableByteChannel channel;
+
     private long pos = 0;
 
-    public LocalPositionOutputStream(int buffer, StandardOpenOption... openOption)
-        throws IOException {
-      stream = new BufferedOutputStream(Files.newOutputStream(path, openOption), buffer);
+    public LocalPositionOutputStream(ByteBuffer buffer, StandardOpenOption... openOption) throws IOException {
+      this.buffer = buffer;
+      Set<OpenOption> optionSet = new HashSet<>(openOption.length);
+      Collections.addAll(optionSet, openOption);
+      optionSet.add(StandardOpenOption.WRITE);
+      this.channel = Files.newByteChannel(path, optionSet);
     }
 
     @Override
@@ -83,29 +105,50 @@ public class LocalOutputFile implements OutputFile {
     @Override
     public void write(int data) throws IOException {
       pos++;
-      stream.write(data);
+      if (!buffer.hasRemaining()) {
+        flush();
+      }
+      buffer.put((byte) data);
     }
 
     @Override
     public void write(byte[] data) throws IOException {
-      pos += data.length;
-      stream.write(data);
+      write(data, 0, data.length);
     }
 
     @Override
     public void write(byte[] data, int off, int len) throws IOException {
-      pos += len;
-      stream.write(data, off, len);
+      write(ByteBuffer.wrap(data, off, len));
+    }
+
+    @Override
+    public void write(ByteBuffer buf) throws IOException {
+      pos += buf.remaining();
+      int oldLimit = buf.limit();
+      while (buf.remaining() > 0) {
+        if (!buffer.hasRemaining()) {
+          flush();
+        }
+        int toWrite = Math.min(buf.remaining(), buffer.remaining());
+        buf.limit(buf.position() + toWrite);
+        buffer.put(buf);
+        buf.limit(oldLimit);
+      }
     }
 
     @Override
     public void flush() throws IOException {
-      stream.flush();
+      int oldLimit = buffer.limit();
+      buffer.flip();
+      channel.write(buffer);
+      buffer.clear();
+      buffer.limit(oldLimit);
     }
 
     @Override
     public void close() throws IOException {
-      stream.close();
+      flush();
+      channel.close();
     }
   }
 }

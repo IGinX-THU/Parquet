@@ -24,16 +24,12 @@ package org.apache.parquet.io;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
-/**
- * {@code LocalInputFile} is an implementation needed by Parquet to read from local data files using
- * {@link org.apache.parquet.io.SeekableInputStream} instances.
- */
 public class LocalInputFile implements InputFile {
 
   private final Path path;
-  private long length = -1;
 
   public LocalInputFile(Path file) {
     path = file;
@@ -41,12 +37,7 @@ public class LocalInputFile implements InputFile {
 
   @Override
   public long getLength() throws IOException {
-    if (length == -1) {
-      try (RandomAccessFile file = new RandomAccessFile(path.toFile(), "r")) {
-        length = file.length();
-      }
-    }
-    return length;
+    return Files.size(path);
   }
 
   @Override

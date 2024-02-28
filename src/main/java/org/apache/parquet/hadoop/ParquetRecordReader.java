@@ -16,12 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.format.parquet;
+package org.apache.parquet.hadoop;
 
+import org.apache.parquet.ParquetReadOptions;
 import org.apache.parquet.column.page.PageReadStore;
 import org.apache.parquet.filter2.compat.FilterCompat;
 import org.apache.parquet.filter2.compat.FilterCompat.Filter;
-import org.apache.parquet.hadoop.ParquetFileReader;
 import org.apache.parquet.hadoop.metadata.FileMetaData;
 import org.apache.parquet.io.ColumnIOFactory;
 import org.apache.parquet.io.MessageColumnIO;
@@ -110,6 +110,7 @@ public class ParquetRecordReader<T> implements Closeable {
     while (!recordFound) {
       // no more records left
       if (current >= total) {
+        currentRowIdx = -1;
         return false;
       }
 
@@ -168,7 +169,7 @@ public class ParquetRecordReader<T> implements Closeable {
     return currentRowIdx;
   }
 
-  public ParquetFileReader getReader() {
+  public ParquetFileReader getFileReader() {
     return reader;
   }
 
