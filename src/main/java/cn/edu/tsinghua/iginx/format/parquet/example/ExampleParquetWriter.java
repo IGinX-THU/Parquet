@@ -1,24 +1,22 @@
 package cn.edu.tsinghua.iginx.format.parquet.example;
 
 import cn.edu.tsinghua.iginx.format.parquet.ParquetWriter;
+import cn.edu.tsinghua.iginx.format.parquet.api.RecordDematerializer;
+import cn.edu.tsinghua.iginx.format.parquet.io.LocalOutputFile;
 import org.apache.parquet.bytes.HeapByteBufferAllocator;
 import org.apache.parquet.example.data.Group;
-import org.apache.parquet.hadoop.ParquetRecordWriter;
-import org.apache.parquet.hadoop.example.GroupDematerializer;
-import org.apache.parquet.io.LocalOutputFile;
+import org.apache.parquet.hadoop.ExportedParquetRecordWriter;
 import org.apache.parquet.io.OutputFile;
-import org.apache.parquet.io.api.RecordDematerializer;
 import org.apache.parquet.schema.MessageType;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Collections;
 
 public class ExampleParquetWriter extends ParquetWriter<Group> {
   public static final String OBJECT_MODEL_NAME_VALUE = "example";
 
-  protected ExampleParquetWriter(ParquetRecordWriter<Group> recordWriter) throws IOException {
+  protected ExampleParquetWriter(ExportedParquetRecordWriter<Group> recordWriter) throws IOException {
     super(recordWriter);
   }
 
@@ -41,15 +39,16 @@ public class ExampleParquetWriter extends ParquetWriter<Group> {
     }
 
     @Override
-    protected RecordDematerializer<Group> getDematerializer() {
-      Map<String, String> extraMetaData = new HashMap<>();
-      extraMetaData.put(OBJECT_MODEL_NAME_PROP, OBJECT_MODEL_NAME_VALUE);
-      return new GroupDematerializer(schema, extraMetaData);
+    protected RecordDematerializer<Group> dematerializer() {
+      return new GroupDematerializer(schema);
     }
 
     @Override
     public ExampleParquetWriter build() throws IOException {
-      ParquetRecordWriter<Group> recordWriter = build(file);
+      ExportedParquetRecordWriter<Group> recordWriter = build(
+          file,
+          schema,
+          Collections.singletonMap(OBJECT_MODEL_NAME_PROP, OBJECT_MODEL_NAME_VALUE));
       return new ExampleParquetWriter(recordWriter);
     }
   }

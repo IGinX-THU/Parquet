@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package org.apache.parquet.hadoop.codec;
+package cn.edu.tsinghua.iginx.format.parquet.codec;
 
 import io.airlift.compress.Decompressor;
+import org.apache.parquet.bytes.ByteBufferAllocator;
 import org.apache.parquet.bytes.BytesInput;
 import org.apache.parquet.compression.CompressionCodecFactory;
 
@@ -27,29 +28,27 @@ public class AirliftBytesInputDecompressor
     implements CompressionCodecFactory.BytesInputDecompressor {
 
   private final Decompressor decompressor;
+  private final ByteBufferAllocator allocator;
 
-  public AirliftBytesInputDecompressor(Decompressor decompressor) {
+  public AirliftBytesInputDecompressor(Decompressor decompressor, ByteBufferAllocator allocator) {
     this.decompressor = decompressor;
+    this.allocator = allocator;
   }
 
   @Override
   public BytesInput decompress(BytesInput bytes, int uncompressedSize) throws IOException {
-    byte[] ingoing = bytes.toByteArray();
-    byte[] outgoing = new byte[uncompressedSize];
+    ByteBuffer ingoing = bytes.toByteBuffer();
+    ByteBuffer outgoing = allocator.allocate(uncompressedSize);
 
-    int written = decompressor.decompress(ingoing, 0, ingoing.length, outgoing, 0, outgoing.length);
-    if (written != uncompressedSize) {
-      throw new IOException("Non-compressed data did not have matching uncompressed sizes.");
-    }
-    return BytesInput.from(outgoing, 0, written);
+    decompressor.decompress(ingoing, outgoing);
+    outgoing.flip();
+    return BytesInput.from(outgoing);
   }
 
   @Override
   public void decompress(
-      ByteBuffer input, int compressedSize, ByteBuffer output, int uncompressedSize)
-      throws IOException {
+      ByteBuffer input, int compressedSize, ByteBuffer output, int uncompressedSize) {
     decompressor.decompress(input, output);
-    output.position(uncompressedSize);
   }
 
   @Override

@@ -18,11 +18,13 @@
  */
 package cn.edu.tsinghua.iginx.format.parquet;
 
+import cn.edu.tsinghua.iginx.format.parquet.codec.DefaultCodecFactory;
 import org.apache.parquet.ParquetReadOptions;
 import org.apache.parquet.bytes.ByteBufferAllocator;
+import org.apache.parquet.compression.CompressionCodecFactory;
 import org.apache.parquet.filter2.compat.FilterCompat;
+import org.apache.parquet.hadoop.ExportedParquetRecordReader;
 import org.apache.parquet.hadoop.ParquetFileReader;
-import org.apache.parquet.hadoop.ParquetRecordReader;
 import org.apache.parquet.hadoop.metadata.ParquetMetadata;
 import org.apache.parquet.io.InputFile;
 import org.apache.parquet.io.SeekableInputStream;
@@ -31,13 +33,15 @@ import org.apache.parquet.schema.MessageType;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 
 public class ParquetReader<T> implements Closeable {
 
-  private final ParquetRecordReader<T> recordReader;
+  private final ExportedParquetRecordReader<T> recordReader;
 
-  protected ParquetReader(ParquetRecordReader<T> recordReader) {
+  protected ParquetReader(ExportedParquetRecordReader<T> recordReader) {
     this.recordReader = Objects.requireNonNull(recordReader);
   }
 
@@ -69,35 +73,10 @@ public class ParquetReader<T> implements Closeable {
   public abstract static class Builder<T, READER extends ParquetReader<T>, BUILDER extends ParquetReader.Builder<T, READER, BUILDER>> {
 
     private final ParquetReadOptions.Builder optionsBuilder = ParquetReadOptions.builder();
+    private Function<MessageType, MessageType> schemaConverter = Function.identity();
 
     protected Builder() {
-    }
-
-    protected ParquetMetadata readFooter(InputFile file) throws IOException {
-      try (SeekableInputStream in = file.newStream()) {
-        return ParquetFileReader.readFooter(file, optionsBuilder.build(), in);
-      }
-    }
-
-    protected ParquetRecordReader<T> build(InputFile file, ParquetMetadata footer) throws IOException {
-      Objects.requireNonNull(file);
-
-      ParquetReadOptions options = optionsBuilder.build();
-
-      ParquetFileReader reader = new ParquetFileReader(file, footer, options);
-      ParquetMetadata metadata = reader.getFooter();
-      MessageType schema = metadata.getFileMetaData().getSchema();
-
-      try {
-        MessageType requestedSchema = options.getSchemaConvertor().apply(schema);
-        reader.setRequestedSchema(requestedSchema);
-      } catch (Exception e) {
-        reader.close();
-        throw e;
-      }
-
-      RecordMaterializer<T> recordMaterializer = materializer();
-      return new ParquetRecordReader<>(recordMaterializer, reader, options);
+      optionsBuilder.withCodecFactory(new DefaultCodecFactory());
     }
 
     /**
@@ -108,12 +87,37 @@ public class ParquetReader<T> implements Closeable {
     /**
      * get the record materializer of the coming records
      *
+     * @param schema the requested schema
+     * @param extra  extra metadata from the file
      * @return the record materializer
      * @throws IOException if the materializer cannot be created
      */
-    protected abstract RecordMaterializer<T> materializer() throws IOException;
+    protected abstract RecordMaterializer<T> materializer(MessageType schema, Map<String, String> extra) throws IOException;
 
     public abstract READER build() throws IOException;
+
+    protected ParquetMetadata readFooter(InputFile file) throws IOException {
+      Objects.requireNonNull(file);
+
+      try (SeekableInputStream in = file.newStream()) {
+        return ParquetFileReader.readFooter(file, optionsBuilder.build(), in);
+      }
+    }
+
+    protected ExportedParquetRecordReader<T> build(InputFile file, ParquetMetadata footer) throws IOException {
+      Objects.requireNonNull(file);
+      Objects.requireNonNull(footer);
+
+      ParquetReadOptions options = optionsBuilder.build();
+
+      ParquetFileReader reader = new ParquetFileReader(file, footer, options);
+      ParquetMetadata metadata = reader.getFooter();
+      MessageType schema = metadata.getFileMetaData().getSchema();
+      MessageType requestedSchema = schemaConverter.apply(schema);
+
+      RecordMaterializer<T> recordMaterializer = materializer(requestedSchema, metadata.getFileMetaData().getKeyValueMetaData());
+      return new ExportedParquetRecordReader<>(recordMaterializer, reader, requestedSchema, options);
+    }
 
     public BUILDER withFilter(FilterCompat.Filter filter) {
       optionsBuilder.withRecordFilter(filter);
@@ -147,6 +151,16 @@ public class ParquetReader<T> implements Closeable {
 
     public BUILDER withFileRange(long rangeStart, long rangeEnd) {
       optionsBuilder.withRange(rangeStart, rangeEnd);
+      return self();
+    }
+
+    public BUILDER withSchemaConverter(Function<MessageType, MessageType> schemaConverter) {
+      this.schemaConverter = schemaConverter;
+      return self();
+    }
+
+    public BUILDER withCodecFactory(CompressionCodecFactory codecFactory) {
+      optionsBuilder.withCodecFactory(codecFactory);
       return self();
     }
   }

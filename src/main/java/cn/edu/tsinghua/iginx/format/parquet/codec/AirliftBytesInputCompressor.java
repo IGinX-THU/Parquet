@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-package org.apache.parquet.hadoop.codec;
+package cn.edu.tsinghua.iginx.format.parquet.codec;
 
 import io.airlift.compress.Compressor;
+import org.apache.parquet.bytes.ByteBufferAllocator;
 import org.apache.parquet.bytes.BytesInput;
 import org.apache.parquet.compression.CompressionCodecFactory;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 public class AirliftBytesInputCompressor implements CompressionCodecFactory.BytesInputCompressor {
 
@@ -29,19 +31,23 @@ public class AirliftBytesInputCompressor implements CompressionCodecFactory.Byte
 
   private final CompressionCodecName codecName;
 
-  public AirliftBytesInputCompressor(Compressor compressor, CompressionCodecName codecName) {
+  private final ByteBufferAllocator allocator;
+
+  public AirliftBytesInputCompressor(Compressor compressor, CompressionCodecName codecName, ByteBufferAllocator allocator) {
     this.compressor = compressor;
     this.codecName = codecName;
+    this.allocator = allocator;
   }
 
   @Override
   public BytesInput compress(BytesInput bytes) throws IOException {
-    byte[] ingoing = bytes.toByteArray();
-    int maxOutputSize = compressor.maxCompressedLength((int) bytes.size());
-    byte[] outgoing = new byte[maxOutputSize];
+    ByteBuffer ingoing = bytes.toByteBuffer();
+    int maxOutputSize = compressor.maxCompressedLength(ingoing.remaining());
+    ByteBuffer outgoing = allocator.allocate(maxOutputSize);
 
-    int compressedSize = compressor.compress(ingoing, 0, ingoing.length, outgoing, 0, outgoing.length);
-    return BytesInput.from(outgoing, 0, compressedSize);
+    compressor.compress(ingoing, outgoing);
+    outgoing.flip();
+    return BytesInput.from(outgoing);
   }
 
   @Override

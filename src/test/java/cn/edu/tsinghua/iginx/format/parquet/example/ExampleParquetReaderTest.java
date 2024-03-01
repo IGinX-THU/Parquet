@@ -7,6 +7,7 @@ import org.apache.parquet.bytes.TrackingByteBufferAllocator;
 import org.apache.parquet.column.ParquetProperties;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.filter2.compat.FilterCompat;
+import org.apache.parquet.schema.MessageType;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -174,4 +175,21 @@ class ExampleParquetReaderTest {
     assertEquals(DATA, readUsers(path, FilterCompat.NOOP, true, true));
   }
 
+  @ParameterizedTest
+  @MethodSource("provideArguments")
+  public void testProject(Path path) throws Exception {
+    MessageType schema = new MessageType(PhoneBook.SCHEMA.getName(), PhoneBook.SCHEMA.getType("name"));
+    try (TrackingByteBufferAllocator allocator = new TrackingByteBufferAllocator(new HeapByteBufferAllocator())) {
+      ExampleParquetReader.Builder builder = ExampleParquetReader.builder(path)
+          .withAllocator(new HeapByteBufferAllocator())
+          .withSchemaConverter(s -> schema);
+      try (ParquetReader<Group> reader = builder.build()) {
+        for (PhoneBook.User u : DATA) {
+          Group group = reader.read();
+          assertEquals(schema, group.getType());
+          assertEquals(u.getName(), group.getString("name", 0));
+        }
+      }
+    }
+  }
 }

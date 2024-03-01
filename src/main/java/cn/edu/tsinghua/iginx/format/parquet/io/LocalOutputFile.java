@@ -19,9 +19,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.parquet.io;
+package cn.edu.tsinghua.iginx.format.parquet.io;
 
 import org.apache.parquet.bytes.ByteBufferAllocator;
+import org.apache.parquet.io.OutputFile;
+import org.apache.parquet.io.PositionOutputStream;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -118,21 +120,15 @@ public class LocalOutputFile implements OutputFile {
 
     @Override
     public void write(byte[] data, int off, int len) throws IOException {
-      write(ByteBuffer.wrap(data, off, len));
-    }
-
-    @Override
-    public void write(ByteBuffer buf) throws IOException {
-      pos += buf.remaining();
-      int oldLimit = buf.limit();
-      while (buf.remaining() > 0) {
+      while (len > 0) {
         if (!buffer.hasRemaining()) {
           flush();
         }
-        int toWrite = Math.min(buf.remaining(), buffer.remaining());
-        buf.limit(buf.position() + toWrite);
-        buffer.put(buf);
-        buf.limit(oldLimit);
+        int toWrite = Math.min(len, buffer.remaining());
+        buffer.put(data, off, toWrite);
+        pos += toWrite;
+        off += toWrite;
+        len -= toWrite;
       }
     }
 

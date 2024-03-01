@@ -23,6 +23,7 @@
 
 package org.apache.parquet.hadoop;
 
+import org.apache.hadoop.fs.Path;
 import org.apache.parquet.ParquetReadOptions;
 import org.apache.parquet.bytes.ByteBufferInputStream;
 import org.apache.parquet.bytes.BytesInput;
@@ -217,6 +218,10 @@ public class ParquetFileReader implements Closeable {
 
   public FileMetaData getFileMetaData() {
     return fileMetaData;
+  }
+
+  public Path getPath() {
+    return new Path(file.toString());
   }
 
   public long getRecordCount() {

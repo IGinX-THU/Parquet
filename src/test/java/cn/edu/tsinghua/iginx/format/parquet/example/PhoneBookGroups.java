@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 
 public class PhoneBookGroups {
 
-  public static Group from(PhoneBook.User user) {
+  public static Group parseUser(PhoneBook.User user) {
     SimpleGroup root = new SimpleGroup(PhoneBook.SCHEMA);
     root.append("id", user.getId());
 
@@ -124,7 +124,7 @@ public class PhoneBookGroups {
   }
 
   public static void writeUsers(ExampleParquetWriter.Builder writerBuilder, List<PhoneBook.User> users) throws IOException {
-    List<Group> groups = users.stream().map(PhoneBookGroups::from).collect(Collectors.toList());
+    List<Group> groups = users.stream().map(PhoneBookGroups::parseUser).collect(Collectors.toList());
     write(writerBuilder, groups);
   }
 

@@ -19,7 +19,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.parquet.io;
+package cn.edu.tsinghua.iginx.format.parquet.io;
+
+import org.apache.parquet.io.InputFile;
+import org.apache.parquet.io.SeekableInputStream;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;

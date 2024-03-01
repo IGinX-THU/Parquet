@@ -14,29 +14,26 @@
  * limitations under the License.
  */
 
-package org.apache.parquet.hadoop.codec;
+package cn.edu.tsinghua.iginx.format.parquet.codec;
 
 import org.apache.parquet.bytes.BytesInput;
 import org.apache.parquet.compression.CompressionCodecFactory;
+import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
-public class NoopBytesInputDecompressor implements CompressionCodecFactory.BytesInputDecompressor {
+public class NoopBytesInputCompressor implements CompressionCodecFactory.BytesInputCompressor {
+
+  public static final NoopBytesInputCompressor INSTANCE = new NoopBytesInputCompressor();
+
   @Override
-  public void decompress(
-      ByteBuffer input, int compressedSize, ByteBuffer output, int uncompressedSize)
-      throws IOException {
-    if (compressedSize != uncompressedSize) {
-      throw new IOException(
-          "Non-compressed data did not have matching compressed and uncompressed sizes.");
-    }
-    output.put((ByteBuffer) input.duplicate().position(0).limit(compressedSize));
+  public BytesInput compress(BytesInput bytes) throws IOException {
+    return bytes;
   }
 
   @Override
-  public BytesInput decompress(BytesInput bytes, int uncompressedSize) {
-    return bytes;
+  public CompressionCodecName getCodecName() {
+    return CompressionCodecName.UNCOMPRESSED;
   }
 
   @Override

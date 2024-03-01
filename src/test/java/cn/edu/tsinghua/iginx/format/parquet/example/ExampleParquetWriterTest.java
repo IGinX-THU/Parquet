@@ -2,6 +2,7 @@ package cn.edu.tsinghua.iginx.format.parquet.example;
 
 import cn.edu.tsinghua.iginx.format.parquet.ParquetWriter;
 import cn.edu.tsinghua.iginx.format.parquet.test.FileSystemUtils;
+import cn.edu.tsinghua.iginx.format.parquet.test.PhoneBook;
 import org.apache.parquet.bytes.HeapByteBufferAllocator;
 import org.apache.parquet.bytes.TrackingByteBufferAllocator;
 import org.apache.parquet.column.Encoding;
@@ -10,24 +11,28 @@ import org.apache.parquet.example.data.Group;
 import org.apache.parquet.example.data.simple.SimpleGroupFactory;
 import org.apache.parquet.hadoop.metadata.BlockMetaData;
 import org.apache.parquet.hadoop.metadata.ColumnChunkMetaData;
+import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.apache.parquet.hadoop.metadata.ParquetMetadata;
 import org.apache.parquet.io.api.Binary;
 import org.apache.parquet.schema.MessageType;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import static cn.edu.tsinghua.iginx.format.parquet.example.PhoneBookGroups.parseUser;
 import static org.apache.parquet.column.Encoding.*;
 import static org.apache.parquet.column.ParquetProperties.WriterVersion.PARQUET_1_0;
 import static org.apache.parquet.column.ParquetProperties.WriterVersion.PARQUET_2_0;
 import static org.apache.parquet.hadoop.metadata.CompressionCodecName.UNCOMPRESSED;
 import static org.apache.parquet.schema.MessageTypeParser.parseMessageType;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class ExampleParquetWriterTest {
 
@@ -60,7 +65,7 @@ class ExampleParquetWriterTest {
         try (TrackingByteBufferAllocator allocator = new TrackingByteBufferAllocator(new HeapByteBufferAllocator())) {
           ExampleParquetWriter.Builder writerBuilder = ExampleParquetWriter.builder(file, schema)
               .withAllocator(new HeapByteBufferAllocator())
-              .withCompressionCodec(UNCOMPRESSED)
+              .withCodec(UNCOMPRESSED)
               .withRowGroupSize(1024)
               .withPageSize(1024)
               .withDictionaryPageSize(512)
@@ -123,5 +128,39 @@ class ExampleParquetWriterTest {
         Files.delete(file);
       }
     }
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"UNCOMPRESSED", "SNAPPY", "GZIP", "LZO", "ZSTD", "LZ4_RAW"})
+  public void testCompress(String codecName) throws Exception {
+    Path file = Files.createTempFile(null, ".parquet");
+    List<PhoneBook.User> data = PhoneBook.makeUsers(1000);
+    CompressionCodecName codec = CompressionCodecName.valueOf(codecName);
+    try (TrackingByteBufferAllocator allocator = new TrackingByteBufferAllocator(new HeapByteBufferAllocator())) {
+      ExampleParquetWriter.Builder builder = ExampleParquetWriter.builder(file, PhoneBook.SCHEMA)
+          .withAllocator(new HeapByteBufferAllocator())
+          .withOverwrite(true)
+          .withCodec(codec);
+      try (ParquetWriter<Group> reader = builder.build()) {
+        for (PhoneBook.User user : data) {
+          reader.write(parseUser(user));
+        }
+      }
+    }
+
+    try (TrackingByteBufferAllocator allocator = new TrackingByteBufferAllocator(new HeapByteBufferAllocator())) {
+      ExampleParquetReader.Builder builder = ExampleParquetReader.builder(file)
+          .withAllocator(new HeapByteBufferAllocator());
+      try (ExampleParquetReader reader = builder.build()) {
+        for (PhoneBook.User u : data) {
+          Group group = reader.read();
+          assertEquals(PhoneBook.SCHEMA, group.getType());
+          PhoneBook.User actual = PhoneBookGroups.parseUser(group);
+          assertEquals(u, actual);
+        }
+        assertNull(reader.read());
+      }
+    }
+
   }
 }

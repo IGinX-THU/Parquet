@@ -6,7 +6,7 @@
 
     <groupId>cn.edu.tsinghua.iginx</groupId>
     <artifactId>parquet-file</artifactId>
-    <version>0.0.2</version>
+    <version>0.0.3</version>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
@@ -58,9 +58,20 @@
             <version>1.5.5-11</version>
         </dependency>
         <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.16.1</version>
+        </dependency>
+        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>5.10.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.parquet</groupId>
+            <artifactId>parquet-jackson</artifactId>
+            <version>1.13.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -96,39 +107,8 @@
                         <filter>
                             <artifact>org.apache.parquet:parquet-hadoop</artifact>
                             <excludes>
-                                <exclude>org/apache/parquet/*Options*</exclude>
-                                <exclude>org/apache/parquet/format/converter/*</exclude>
-                                <exclude>org/apache/parquet/hadoop/api/*</exclude>
-                                <exclude>org/apache/parquet/hadoop/codec/*</exclude>
-                                <exclude>org/apache/parquet/hadoop/example/*</exclude>
-                                <exclude>org/apache/parquet/hadoop/mapred/*</exclude>
-                                <exclude>org/apache/parquet/hadoop/metadata/ParquetMetadata*</exclude>
-                                <exclude>org/apache/parquet/hadoop/rewrite/*</exclude>
-                                <exclude>org/apache/parquet/hadoop/CodecFactory*</exclude>
-                                <exclude>org/apache/parquet/hadoop/Direct*</exclude>
-                                <exclude>org/apache/parquet/hadoop/*Parquet*Reader*</exclude>
-                                <exclude>org/apache/parquet/hadoop/*Parquet*Writer*</exclude>
-                                <exclude>org/apache/parquet/hadoop/*Parquet*Committer*</exclude>
-                                <exclude>org/apache/parquet/hadoop/*Parquet*Format*</exclude>
-                                <exclude>org/apache/parquet/hadoop/*Parquet*Format*</exclude>
-                                <exclude>org/apache/parquet/hadoop/*MemoryManager*</exclude>
-                                <exclude>org/apache/parquet/hadoop/LruCache*</exclude>
-                                <exclude>org/apache/parquet/hadoop/PrintFooter*</exclude>
-                                <exclude>org/apache/parquet/hadoop/ClientSideMetadataSplitStrategy*</exclude>
-                                <exclude>org/apache/parquet/hadoop/ColumnConfigParser*</exclude>
+                                <exclude>org/apache/parquet/hadoop/ParquetFileReader*</exclude>
                                 <exclude>shaded/parquet/it/unimi/dsi/fastutil/**</exclude>
-                            </excludes>
-                        </filter>
-                        <filter>
-                            <artifact>org.apache.parquet:parquet-common</artifact>
-                            <excludes>
-                                <exclude>org/apache/parquet/io/PositionOutputStream*</exclude>
-                            </excludes>
-                        </filter>
-                        <filter>
-                            <artifact>org.apache.parquet:parquet-format-structures</artifact>
-                            <excludes>
-                                <exclude>parquet.thrift</exclude>
                             </excludes>
                         </filter>
                     </filters>
@@ -136,6 +116,10 @@
                         <relocation>
                             <pattern>org.apache.parquet</pattern>
                             <shadedPattern>shaded.iginx.org.apache.parquet</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>shaded.parquet.com.fasterxml.jackson</pattern>
+                            <shadedPattern>com.fasterxml.jackson</shadedPattern>
                         </relocation>
                     </relocations>
                 </configuration>

@@ -16,15 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.parquet.io.api;
+package cn.edu.tsinghua.iginx.format.parquet.api;
 
-import org.apache.parquet.schema.MessageType;
-
-import java.util.Map;
+import org.apache.parquet.io.api.RecordConsumer;
 
 public abstract class RecordDematerializer<T> {
 
-  public abstract void setRecordConsumer(RecordConsumer recordConsumer);
+  public abstract void prepare(RecordConsumer recordConsumer);
 
   /**
    * called once per record
@@ -32,8 +30,4 @@ public abstract class RecordDematerializer<T> {
    * @param record one record to write to the previously provided record consumer
    */
   public abstract void write(T record);
-
-  public abstract MessageType getSchema();
-
-  public abstract Map<String, String> getExtraMetaData();
 }

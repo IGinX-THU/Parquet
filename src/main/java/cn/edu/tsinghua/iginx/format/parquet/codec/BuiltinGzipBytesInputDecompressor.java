@@ -1,4 +1,4 @@
-package org.apache.parquet.hadoop.codec;
+package cn.edu.tsinghua.iginx.format.parquet.codec;
 
 import org.apache.parquet.bytes.BytesInput;
 import org.apache.parquet.compression.CompressionCodecFactory;
@@ -17,8 +17,7 @@ public class BuiltinGzipBytesInputDecompressor implements CompressionCodecFactor
   @Override
   public void decompress(ByteBuffer input, int compressedSize, ByteBuffer output, int uncompressedSize) throws IOException {
     BytesInput bytesInput = decompress(BytesInput.from(input), uncompressedSize);
-    output.put(bytesInput.toByteArray());
-    output.position(uncompressedSize);
+    output.put(bytesInput.toByteBuffer());
   }
 
   @Override

@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.parquet.hadoop;
+package cn.edu.tsinghua.iginx.format.parquet.codec;
 
 import io.airlift.compress.lz4.Lz4Compressor;
 import io.airlift.compress.lz4.Lz4Decompressor;
@@ -24,36 +24,41 @@ import io.airlift.compress.lzo.LzoCompressor;
 import io.airlift.compress.lzo.LzoDecompressor;
 import io.airlift.compress.snappy.SnappyCompressor;
 import io.airlift.compress.snappy.SnappyDecompressor;
+import org.apache.parquet.bytes.ByteBufferAllocator;
 import org.apache.parquet.bytes.BytesInput;
+import org.apache.parquet.bytes.HeapByteBufferAllocator;
 import org.apache.parquet.compression.CompressionCodecFactory;
-import org.apache.parquet.hadoop.codec.*;
+import org.apache.parquet.hadoop.CodecFactory;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
-public class CodecFactory implements CompressionCodecFactory {
+public class DefaultCodecFactory implements CompressionCodecFactory {
 
   public static final int DEFAULT_LZ4_SEGMENT_SIZE = 256 * 1024;
   public static final int DEFAULT_ZSTD_LEVEL = 3;
   public static final int DEFAULT_ZSTD_WORKERS = 0;
 
+  private final ByteBufferAllocator allocator;
   private final int lz4SegmentSize;
   private final int zstdLevel;
   private final int zstdWorkers;
 
-  public CodecFactory() {
-    this(DEFAULT_LZ4_SEGMENT_SIZE, DEFAULT_ZSTD_LEVEL, DEFAULT_ZSTD_WORKERS);
+  public DefaultCodecFactory() {
+    this(new HeapByteBufferAllocator(), DEFAULT_LZ4_SEGMENT_SIZE, DEFAULT_ZSTD_LEVEL, DEFAULT_ZSTD_WORKERS);
   }
 
-  public CodecFactory(int lz4SegmentSize, int zstdLevel, int zstdWorkers) {
+  public DefaultCodecFactory(ByteBufferAllocator allocator, int lz4SegmentSize, int zstdLevel, int zstdWorkers) {
+    this.allocator = Objects.requireNonNull(allocator);
     this.lz4SegmentSize = lz4SegmentSize;
     this.zstdLevel = zstdLevel;
     this.zstdWorkers = zstdWorkers;
   }
 
-  public static BytesCompressor wrap(CompressionCodecFactory.BytesInputCompressor compressor) {
-    return new BytesCompressor() {
+  public static CodecFactory.BytesCompressor wrap(CompressionCodecFactory.BytesInputCompressor compressor) {
+    return new CodecFactory.BytesCompressor() {
       @Override
       public BytesInput compress(BytesInput bytes) throws IOException {
         return compressor.compress(bytes);
@@ -71,8 +76,8 @@ public class CodecFactory implements CompressionCodecFactory {
     };
   }
 
-  public static BytesDecompressor wrap(CompressionCodecFactory.BytesInputDecompressor decompressor) {
-    return new BytesDecompressor() {
+  public static CodecFactory.BytesDecompressor wrap(CompressionCodecFactory.BytesInputDecompressor decompressor) {
+    return new CodecFactory.BytesDecompressor() {
       @Override
       public BytesInput decompress(BytesInput bytes, int uncompressedSize) throws IOException {
         return decompressor.decompress(bytes, uncompressedSize);
@@ -109,15 +114,15 @@ public class CodecFactory implements CompressionCodecFactory {
       case UNCOMPRESSED:
         return new NoopBytesInputCompressor();
       case SNAPPY:
-        return new AirliftBytesInputCompressor(new SnappyCompressor(), codecName);
+        return new AirliftBytesInputCompressor(new SnappyCompressor(), codecName, allocator);
       case GZIP:
-        return new BuiltinGzipBytesInputCompressor();
+        return new BuiltinGzipBytesInputCompressor(allocator);
       case LZO:
-        return new AirliftBytesInputCompressor(new LzoCompressor(), codecName);
+        return new AirliftBytesInputCompressor(new LzoCompressor(), codecName, allocator);
       case ZSTD:
-        return new ZstdJniBytesInputCompressor(zstdLevel, zstdWorkers);
+        return new ZstdJniBytesInputCompressor(zstdLevel, zstdWorkers, allocator);
       case LZ4_RAW:
-        return new AirliftBytesInputCompressor(new Lz4Compressor(), codecName);
+        return new AirliftBytesInputCompressor(new Lz4Compressor(), codecName, allocator);
       default:
         throw new IllegalArgumentException("Unsupported codec: " + codecName);
     }
@@ -128,39 +133,22 @@ public class CodecFactory implements CompressionCodecFactory {
       case UNCOMPRESSED:
         return new NoopBytesInputDecompressor();
       case SNAPPY:
-        return new AirliftBytesInputDecompressor(new SnappyDecompressor());
+        return new AirliftBytesInputDecompressor(new SnappyDecompressor(), allocator);
       case GZIP:
         return new BuiltinGzipBytesInputDecompressor();
       case LZO:
-        return new AirliftBytesInputDecompressor(new LzoDecompressor());
+        return new AirliftBytesInputDecompressor(new LzoDecompressor(), allocator);
       case BROTLI:
         return new BrotliBytesInputDecompressor();
       case LZ4:
-        return new SegmentedLz4BytesInputDecompressor(lz4SegmentSize);
+        return new SegmentedLz4BytesInputDecompressor(lz4SegmentSize, allocator);
       case ZSTD:
-        return new ZstdJniBytesInputDecompressor();
+        return new ZstdJniBytesInputDecompressor(allocator);
       case LZ4_RAW:
-        return new AirliftBytesInputDecompressor(new Lz4Decompressor());
+        return new AirliftBytesInputDecompressor(new Lz4Decompressor(), allocator);
       default:
         throw new IllegalArgumentException("Unsupported codec: " + codecName);
     }
   }
 
-  @Deprecated
-  public static abstract class BytesCompressor implements CompressionCodecFactory.BytesInputCompressor {
-    public abstract BytesInput compress(BytesInput bytes) throws IOException;
-
-    public abstract CompressionCodecName getCodecName();
-
-    public abstract void release();
-  }
-
-  @Deprecated
-  public static abstract class BytesDecompressor implements CompressionCodecFactory.BytesInputDecompressor {
-    public abstract BytesInput decompress(BytesInput bytes, int uncompressedSize) throws IOException;
-
-    public abstract void decompress(ByteBuffer input, int compressedSize, ByteBuffer output, int uncompressedSize) throws IOException;
-
-    public abstract void release();
-  }
 }

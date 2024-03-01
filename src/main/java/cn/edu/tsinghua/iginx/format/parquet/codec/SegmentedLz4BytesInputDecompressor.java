@@ -1,6 +1,7 @@
-package org.apache.parquet.hadoop.codec;
+package cn.edu.tsinghua.iginx.format.parquet.codec;
 
 import io.airlift.compress.lz4.Lz4Decompressor;
+import org.apache.parquet.bytes.ByteBufferAllocator;
 import org.apache.parquet.bytes.BytesInput;
 import org.apache.parquet.compression.CompressionCodecFactory;
 
@@ -10,16 +11,19 @@ import java.nio.ByteBuffer;
 public class SegmentedLz4BytesInputDecompressor implements CompressionCodecFactory.BytesInputDecompressor {
 
   private final int segmentSize;
+  private final ByteBufferAllocator allocator;
 
-  public SegmentedLz4BytesInputDecompressor(int segmentSize) {
+  public SegmentedLz4BytesInputDecompressor(int segmentSize, ByteBufferAllocator allocator) {
     this.segmentSize = segmentSize;
+    this.allocator = allocator;
   }
 
   @Override
   public BytesInput decompress(BytesInput bytes, int uncompressedSize) throws IOException {
     ByteBuffer input = bytes.toByteBuffer();
-    ByteBuffer output = ByteBuffer.wrap(new byte[uncompressedSize]);
+    ByteBuffer output = allocator.allocate(uncompressedSize);
     decompress(input, input.remaining(), output, uncompressedSize);
+    output.flip();
     return BytesInput.from(output);
   }
 
