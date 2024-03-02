@@ -44,7 +44,7 @@ public class ParquetWriter<T> implements Closeable {
 
   protected final ExportedParquetRecordWriter<T> recordWriter;
 
-  protected ParquetWriter(ExportedParquetRecordWriter<T> recordWriter) throws IOException {
+  protected ParquetWriter(ExportedParquetRecordWriter<T> recordWriter) {
     this.recordWriter = Objects.requireNonNull(recordWriter);
   }
 
