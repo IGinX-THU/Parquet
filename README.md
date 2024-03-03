@@ -1,4 +1,4 @@
-# Parquet-IginX
+# Parquet-IGinX
 
 This is a fork of Parquet-MR which contains the java implementation of the Parquet format. This fork is used by IginX to support the Parquet format.
 
