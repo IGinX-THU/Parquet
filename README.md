@@ -8,11 +8,13 @@ support the Parquet format.
 To use this library, add the following dependency to your `pom.xml`:
 
 ```xml
-<dependency>
-    <groupId>cn.edu.tsinghua.iginx</groupId>
-    <artifactId>parquet-file</artifactId>
-    <version>{parquet-file.version}</version>
-</dependency>
+<dependencies>
+    <dependency>
+        <groupId>cn.edu.tsinghua.iginx</groupId>
+        <artifactId>parquet-file</artifactId>
+        <version>0.0.3</version>
+    </dependency>
+</dependencies>
 ```
 
 and replace `{parquet-file.version}` with the version of the library you want to use.
@@ -29,7 +31,9 @@ You also need to add the following repository to your `pom.xml`:
 </repositories>
 ```
 
-See test cases for usage examples.
+You can find the example usage of this library in the `example` directory.
+
+Please see test cases in `src/test` for more examples.
 
 ## Building from source
 
