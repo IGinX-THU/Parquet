@@ -158,7 +158,7 @@
         <repository>
             <id>github</id>
             <name>GitHub IGinX-THU Apache Maven Packages</name>
-            <url>https://maven.pkg.github.com/IGinX-THU/Parquet</url>
+            <url>https://maven.pkg.github.com/aqni/Parquet</url>
         </repository>
     </distributionManagement>
 
