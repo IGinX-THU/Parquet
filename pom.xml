@@ -6,7 +6,7 @@
 
     <groupId>cn.edu.tsinghua.iginx</groupId>
     <artifactId>parquet-file</artifactId>
-    <version>0.0.3</version>
+    <version>0.0.3-SNAPSHOT</version>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
@@ -156,9 +156,9 @@
 
     <distributionManagement>
         <repository>
-            <id>local-repo-release</id>
-            <name>GitHub Release</name>
-            <url>file://${project.basedir}/maven-repo</url>
+            <id>github</id>
+            <name>GitHub IGinX-THU Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/IGinX-THU/Parquet</url>
         </repository>
     </distributionManagement>
 
