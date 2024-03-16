@@ -156,9 +156,9 @@
 
     <distributionManagement>
         <repository>
-            <id>github</id>
-            <name>GitHub IGinX-THU Apache Maven Packages</name>
-            <url>https://maven.pkg.github.com/aqni/Parquet</url>
+            <id>local</id>
+            <name>Local Temporary Staging Repository</name>
+            <url>file://${project.basedir}/pages/maven-repo</url>
         </repository>
     </distributionManagement>
 
