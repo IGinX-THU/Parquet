@@ -28,6 +28,6 @@ jobs:
         with:
           path: target
           add-paths: maven-repo
-          branch: release-bot/maven-repo/patch
+          branch: release-bot/pages/patch
           commit-message: 'chore(repo): **auto** update maven repository'
           title: 'chore(repo): **auto** update maven repository'
