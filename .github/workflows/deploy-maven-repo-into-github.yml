@@ -2,15 +2,12 @@ name: Deploy Maven Repository into GitHub Pages
 on:
   release:
     types: [ published ]
-permissions:
-  pull-requests: write
-  contents: write
 jobs:
-  publish:
+  deploy-into-pages:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      packages: write
+      pull-requests: write
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -26,8 +23,6 @@ jobs:
           fetch-depth: 0
       - name: deploy
         run: mvn --batch-mode deploy
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
         with:
