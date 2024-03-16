@@ -19,6 +19,8 @@ import java.util.stream.Collectors;
 public class CsvConverter {
 
   public static void main(String[] args) throws IOException {
+
+    // read data from CSV
     String oldCsvContent;
     try (InputStream in = CsvConverter.class.getClassLoader().getResourceAsStream("example.csv")) {
       assert in != null;
@@ -26,8 +28,28 @@ public class CsvConverter {
           .lines().collect(Collectors.joining(System.lineSeparator()));
     }
 
+    // prepare a temp file
+    File tempFile = File.createTempFile("example", ".parquet");
+    Files.deleteIfExists(tempFile.toPath());
+    tempFile.deleteOnExit();
+
+    // prepare a temp string builder
+    StringBuilder sb = new StringBuilder();
+
+    // convert from CSV to Parquet
+    fromCsvToParquet(new ByteArrayInputStream(oldCsvContent.getBytes()), tempFile.toPath());
+
+    // convert from Parquet to CSV
+    fromParquetToCsv(tempFile.toPath(), sb);
+
+    // compare the original CSV and the CSV converted from Parquet
+    assert oldCsvContent.contentEquals(sb);
+    System.out.println("the original CSV and the CSV converted from Parquet are the same");
+  }
+
+  public static void fromCsvToParquet(InputStream csvContent, Path parquetPath) throws IOException {
     // read data from CSV
-    Map.Entry<MessageType, List<Group>> dataFromCsv = fromCsv(new ByteArrayInputStream(oldCsvContent.getBytes()));
+    Map.Entry<MessageType, List<Group>> dataFromCsv = fromCsv(csvContent);
 
     System.out.println("Data from CSV:");
     System.out.println(dataFromCsv.getKey());
@@ -36,24 +58,25 @@ public class CsvConverter {
     }
 
     // write data to Parquet
-    File tempFile = File.createTempFile("example", ".parquet");
-    Files.deleteIfExists(tempFile.toPath());
-    tempFile.deleteOnExit();
-    toParquet(tempFile.toPath(), dataFromCsv.getKey(), dataFromCsv.getValue());
+    ExampleParquetWriter.Builder builder = ExampleParquetWriter.builder(parquetPath, dataFromCsv.getKey());
+    try (ExampleParquetWriter writer = builder.build()) {
+      for (Group group : dataFromCsv.getValue()) {
+        writer.write(group);
+      }
+    }
+  }
 
+  public static void fromParquetToCsv(Path parquetPath, Appendable dist) throws IOException {
     // read data from Parquet
-    List<List<String>> dataFromParquet = fromParquet(tempFile.toPath());
-
-    StringBuilder sb = new StringBuilder();
-    CSVFormat.DEFAULT.print(sb).printRecords(dataFromParquet);
-    String newCsvContent = sb.toString();
+    List<List<String>> records = fromParquet(parquetPath);
 
     System.out.println("Data from Parquet:");
-    System.out.println(newCsvContent);
+    for (List<String> record : records) {
+      System.out.println(record);
+    }
 
-    // compare the original CSV and the CSV converted from Parquet
-    assert oldCsvContent.equals(newCsvContent);
-    System.out.println("the original CSV and the CSV converted from Parquet are the same");
+    // write data to CSV
+    CSVFormat.DEFAULT.print(dist).printRecords(records);
   }
 
   public static MessageType getSchema(String tableName, List<String> header, List<CsvType> types) {
@@ -173,19 +196,6 @@ public class CsvConverter {
       }
     }
     return records;
-  }
-
-  public static void toParquet(Path path, MessageType schema, List<Group> groups) throws IOException {
-    ExampleParquetWriter.Builder builder = ExampleParquetWriter.builder(path, schema);
-    try (ExampleParquetWriter writer = builder.build()) {
-      for (Group group : groups) {
-        writer.write(group);
-      }
-    }
-  }
-
-  public static void toCsv(OutputStream output, List<List<String>> records) throws IOException {
-    CSVFormat.DEFAULT.print(new OutputStreamWriter(output)).printRecords(records);
   }
 
   enum CsvType {
