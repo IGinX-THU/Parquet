@@ -158,7 +158,7 @@
         <repository>
             <id>local</id>
             <name>Local Temporary Staging Repository</name>
-            <url>file://${project.basedir}/maven-repo</url>
+            <url>file://${project.basedir}/pages/maven-repo</url>
         </repository>
     </distributionManagement>
 
