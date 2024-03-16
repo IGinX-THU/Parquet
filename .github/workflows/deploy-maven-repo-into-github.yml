@@ -18,7 +18,7 @@ jobs:
       - name: checkout pages branch
         uses: actions/checkout@v4
         with:
-          path: pages
+          path: target
           ref: pages
           fetch-depth: 0
       - name: deploy
