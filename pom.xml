@@ -156,9 +156,9 @@
 
     <distributionManagement>
         <repository>
-            <id>local-repo-release</id>
-            <name>GitHub Release</name>
-            <url>file://${project.basedir}/maven-repo</url>
+            <id>local</id>
+            <name>Local Temporary Staging Repository</name>
+            <url>file://${project.basedir}/pages/maven-repo</url>
         </repository>
     </distributionManagement>
 
