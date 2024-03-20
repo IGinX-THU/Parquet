@@ -75,8 +75,8 @@ public class ParquetWriter<T> implements Closeable {
     private final FileEncryptionProperties encryptionProperties = null;
     private CompressionCodecFactory codecFactory = new DefaultCodecFactory();
     private CompressionCodecName codecName = CompressionCodecName.UNCOMPRESSED;
-    private long rowGroupSize = 8 * 1024 * 1024; // 8MB
-    private int maxPaddingSize = 128 * 1024 * 1024; // 128MB
+    private long rowGroupSize = 128 * 1024 * 1024; // 128MB
+    private int maxPaddingSize = 8 * 1024 * 1024; // 8MB
     private boolean enableValidation = true;
     private boolean enableOverwrite = false;
 
