@@ -109,7 +109,7 @@ public class CodecFactory implements CompressionCodecFactory {
       case UNCOMPRESSED:
         return new NoopBytesInputCompressor();
       case SNAPPY:
-        return new AirliftBytesInputCompressor(new SnappyCompressor(), codecName);
+        return new SnappyBytesInputCompressor();
       case GZIP:
         return new BuiltinGzipBytesInputCompressor();
       case LZO:
@@ -117,7 +117,7 @@ public class CodecFactory implements CompressionCodecFactory {
       case ZSTD:
         return new ZstdJniBytesInputCompressor(zstdLevel, zstdWorkers);
       case LZ4_RAW:
-        return new AirliftBytesInputCompressor(new Lz4Compressor(), codecName);
+        return new Lz4BytesInputCompressor();
       default:
         throw new IllegalArgumentException("Unsupported codec: " + codecName);
     }
@@ -128,19 +128,17 @@ public class CodecFactory implements CompressionCodecFactory {
       case UNCOMPRESSED:
         return new NoopBytesInputDecompressor();
       case SNAPPY:
-        return new AirliftBytesInputDecompressor(new SnappyDecompressor());
+        return new SnappyBytesInputDecompressor();
       case GZIP:
         return new BuiltinGzipBytesInputDecompressor();
       case LZO:
         return new AirliftBytesInputDecompressor(new LzoDecompressor());
       case BROTLI:
         return new BrotliBytesInputDecompressor();
-      case LZ4:
-        return new SegmentedLz4BytesInputDecompressor(lz4SegmentSize);
       case ZSTD:
         return new ZstdJniBytesInputDecompressor();
       case LZ4_RAW:
-        return new AirliftBytesInputDecompressor(new Lz4Decompressor());
+        return new Lz4BytesInputDecompressor();
       default:
         throw new IllegalArgumentException("Unsupported codec: " + codecName);
     }

@@ -11,7 +11,7 @@ import java.util.zip.GZIPOutputStream;
 public class BuiltinGzipBytesInputCompressor implements CompressionCodecFactory.BytesInputCompressor {
   @Override
   public BytesInput compress(BytesInput bytes) throws IOException {
-    ByteArrayOutputStream outgoing = new ByteArrayOutputStream((int) bytes.size());
+    ByteArrayOutputStream outgoing = new ByteArrayOutputStream(Math.toIntExact(bytes.size()));
     try (GZIPOutputStream gzipOutputStream = new GZIPOutputStream(outgoing)) {
       bytes.writeAllTo(gzipOutputStream);
     }

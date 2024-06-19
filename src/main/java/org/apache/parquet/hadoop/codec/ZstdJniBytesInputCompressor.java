@@ -20,7 +20,7 @@ public class ZstdJniBytesInputCompressor implements CompressionCodecFactory.Byte
 
   @Override
   public BytesInput compress(BytesInput bytes) throws IOException {
-    ByteArrayOutputStream stream = new ByteArrayOutputStream((int) bytes.size());
+    ByteArrayOutputStream stream = new ByteArrayOutputStream(Math.toIntExact(bytes.size()));
     try (ZstdOutputStream zstdStream = new ZstdOutputStream(stream, RecyclingBufferPool.INSTANCE, level)) {
       zstdStream.setWorkers(workers);
       bytes.writeAllTo(zstdStream);

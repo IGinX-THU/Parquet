@@ -37,7 +37,7 @@ public class AirliftBytesInputCompressor implements CompressionCodecFactory.Byte
   @Override
   public BytesInput compress(BytesInput bytes) throws IOException {
     byte[] ingoing = bytes.toByteArray();
-    int maxOutputSize = compressor.maxCompressedLength((int) bytes.size());
+    int maxOutputSize = compressor.maxCompressedLength(Math.toIntExact(bytes.size()));
     byte[] outgoing = new byte[maxOutputSize];
 
     int compressedSize = compressor.compress(ingoing, 0, ingoing.length, outgoing, 0, outgoing.length);
