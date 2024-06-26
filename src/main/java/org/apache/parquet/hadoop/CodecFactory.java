@@ -115,7 +115,7 @@ public class CodecFactory implements CompressionCodecFactory {
       case LZO:
         return new AirliftBytesInputCompressor(new LzoCompressor(), codecName);
       case ZSTD:
-        return new ZstdJniBytesInputCompressor(zstdLevel, zstdWorkers);
+        return new ZstdJniBytesInputCompressor(zstdLevel);
       case LZ4_RAW:
         return new Lz4BytesInputCompressor();
       default:

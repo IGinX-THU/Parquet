@@ -14,11 +14,20 @@ public class ZstdJniBytesInputDecompressor implements CompressionCodecFactory.By
 
   @Override
   public BytesInput decompress(BytesInput bytes, int uncompressedSize) throws IOException {
-    try (InputStream input = bytes.toInputStream();
-         ZstdInputStream zstdInputStream = new ZstdInputStream(input, RecyclingBufferPool.INSTANCE)) {
-      BytesInput result = BytesInput.from(zstdInputStream, uncompressedSize);
-      return BytesInput.copy(result);
+    byte[] ingoing = bytes.toByteArray();
+    byte[] outgoing = new byte[uncompressedSize];
+
+    long written = Zstd.decompressByteArray(outgoing, 0, outgoing.length, ingoing, 0, ingoing.length);
+
+    if (Zstd.isError(written)) {
+      throw new IOException("Error during Zstd decompression: " + Zstd.getErrorName(written));
     }
+
+    if(written != uncompressedSize) {
+      throw new IOException("Non-compressed data did not have matching uncompressed sizes.");
+    }
+
+    return BytesInput.from(outgoing, 0, uncompressedSize);
   }
 
   @Override

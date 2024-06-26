@@ -1,6 +1,7 @@
 package org.apache.parquet.hadoop.codec;
 
 import com.github.luben.zstd.RecyclingBufferPool;
+import com.github.luben.zstd.Zstd;
 import com.github.luben.zstd.ZstdOutputStream;
 import org.apache.parquet.bytes.BytesInput;
 import org.apache.parquet.compression.CompressionCodecFactory;
@@ -11,21 +12,23 @@ import java.io.IOException;
 
 public class ZstdJniBytesInputCompressor implements CompressionCodecFactory.BytesInputCompressor {
   private final int level;
-  private final int workers;
 
-  public ZstdJniBytesInputCompressor(int level, int workers) {
+  public ZstdJniBytesInputCompressor(int level) {
     this.level = level;
-    this.workers = workers;
   }
 
   @Override
   public BytesInput compress(BytesInput bytes) throws IOException {
-    ByteArrayOutputStream stream = new ByteArrayOutputStream(Math.toIntExact(bytes.size()));
-    try (ZstdOutputStream zstdStream = new ZstdOutputStream(stream, RecyclingBufferPool.INSTANCE, level)) {
-      zstdStream.setWorkers(workers);
-      bytes.writeAllTo(zstdStream);
+    byte[] ingoing = bytes.toByteArray();
+    byte[] outgoing = new byte[Math.toIntExact(Zstd.compressBound(ingoing.length))];
+
+    long written = Zstd.compressByteArray(outgoing, 0, outgoing.length, ingoing, 0, ingoing.length, level);
+
+    if(Zstd.isError(written)) {
+      throw new IOException("Error during Zstd compression: " + Zstd.getErrorName(written));
     }
-    return BytesInput.from(stream);
+
+    return BytesInput.from(outgoing, 0, Math.toIntExact(written));
   }
 
   @Override
