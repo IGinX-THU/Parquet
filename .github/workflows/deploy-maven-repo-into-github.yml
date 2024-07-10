@@ -1,0 +1,33 @@
+name: Deploy Maven Repository into GitHub Pages
+on:
+  release:
+    types: [ published ]
+jobs:
+  deploy-into-pages:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '8'
+          distribution: 'temurin'
+          cache: 'maven'
+      - name: checkout pages branch
+        uses: actions/checkout@v4
+        with:
+          path: target
+          ref: pages
+          fetch-depth: 0
+      - name: deploy
+        run: mvn --batch-mode deploy
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          path: target
+          add-paths: maven-repo
+          branch: release-bot/pages/patch
+          commit-message: 'chore(repo): update maven repository'
+          title: 'chore(repo): update maven repository'
